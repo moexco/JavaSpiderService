@@ -110,6 +110,16 @@ public class ZhiYinManKeServiceImpl implements ZhiYinManKeService {
         return list;
     }
 
+    @Override
+    public List<JSONObject> comicSearch(String value, List<JSONObject> data) throws IOException {
+
+        if (null == data || data.size() == 0) {
+            data = getAllComic();
+        }
+
+        return data.stream().filter(e -> Pattern.matches(".*?" + value + ".*?", e.getString("comicName"))).collect(Collectors.toList());
+    }
+
     private String fromCharCode(int... codePoints) {
         return new String(codePoints, 0, codePoints.length);
     }

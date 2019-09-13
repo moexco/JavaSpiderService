@@ -36,4 +36,7 @@ public interface ZhiYinManKeService {
      */
     List<String> getChapterImages(String url) throws IOException;
 
+
+    List<JSONObject> comicSearch(String value, List<JSONObject> data) throws IOException;
+
 }
