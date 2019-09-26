@@ -36,4 +36,13 @@ public interface ZhiYinManKeService {
      */
     List<String> getChapterImages(String url) throws IOException;
 
+    /**
+     * 模糊搜索漫画，data可以为null，未做排序处理
+     * @param value
+     * @param data
+     * @return
+     * @throws IOException
+     */
+    List<JSONObject> comicSearch(String value, List<JSONObject> data) throws IOException;
+
 }
