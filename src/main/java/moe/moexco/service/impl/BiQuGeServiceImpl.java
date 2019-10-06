@@ -2,17 +2,16 @@ package moe.moexco.service.impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-
-
-import moe.moexco.service.BiQuGeService;
 import moe.moexco.httptools.OkHttpService;
 import moe.moexco.httptools.impl.HttpService;
+import moe.moexco.service.BiQuGeService;
 import okhttp3.Response;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -30,7 +29,6 @@ public class BiQuGeServiceImpl implements BiQuGeService {
     @Override
     public JSONObject biQuGeIndex() throws IOException {
         String url = "https://www.xbiquge6.com/";
-
         Response response = httpService.httpGet(url, null);
         assert response.body() != null;
         Document document = Jsoup.parse(response.body().string());
@@ -70,13 +68,13 @@ public class BiQuGeServiceImpl implements BiQuGeService {
     }
 
     @Override
-    public JSONArray biQuSearch(String value, String page) throws IOException {
+    public List<JSONObject> biQuSearch(String value, String page) throws IOException {
         String url = "https://www.xbiquge6.com/search.php?keyword=";
         String urlEndWith = "&page=";
 
         if (null != page && !"".equals(page)) {
             url = url + value + urlEndWith + page;
-        }else {
+        } else {
             url = url + value;
         }
 
@@ -98,7 +96,7 @@ public class BiQuGeServiceImpl implements BiQuGeService {
         List<String> updateTimeList = list.select(":contains(更新时间) + span").eachText();
         List<String> latestChapterList = list.select(":contains(最新章节) + a").eachText();
 
-        JSONArray jsonArray = new JSONArray();
+        List<JSONObject> data = new ArrayList<>();
         for (int i = 0; i < nameList.size(); i++) {
             JSONObject jsonBook = new JSONObject();
             jsonBook.put("bookName", nameList.get(i));
@@ -109,14 +107,13 @@ public class BiQuGeServiceImpl implements BiQuGeService {
             jsonBook.put("sort", sortList.get(i));
             jsonBook.put("updateTime", updateTimeList.get(i));
             jsonBook.put("latestChapter", latestChapterList.get(i));
-            jsonArray.add(jsonBook);
+            data.add(jsonBook);
         }
-        return jsonArray;
+        return data;
     }
 
     @Override
-    public JSONArray biQuBook(String url) throws IOException {
-
+    public JSONObject biQuBook(String url) throws IOException {
         Response response = httpService.httpGet(url, null);
         Document document = Jsoup.parse(response.body().string());
 
@@ -124,13 +121,20 @@ public class BiQuGeServiceImpl implements BiQuGeService {
         String author = document.selectFirst("div#info > p").text().split("：")[1];
         String status = document.selectFirst("div#info > p + p").text().split(",")[0].split("：")[1];
         String latestUpdateTime = document.selectFirst(":containsOwn(最后更新：)").text().split("：")[1];
-        String latestUpdateChapter = document.selectFirst(":containsOwn(最新章节：)").text().split("：")[1];
+        String[] updateChapter = document.selectFirst(":containsOwn(最新章节：)").text().split("：");
+        String latestUpdateChapter;
+        if (updateChapter.length < 2) {
+            latestUpdateChapter = "暂无";
+        } else {
+            latestUpdateChapter = updateChapter[1];
+        }
         String introduction = document.selectFirst("div#intro").text();
+        String cover = document.select("div#fmimg img").attr("src");
 
         List<String> chapterNameList = document.select("div#list dd").eachText();
         List<String> linkList = document.select("div#list dd a").eachAttr("href").stream().map(e -> withUrl + e).collect(Collectors.toList());
 
-        JSONArray chapterArray = new JSONArray();
+        List<JSONObject> chapterArray = new ArrayList<>();
         for (int i = 0; i < chapterNameList.size(); i++) {
             JSONObject chapterJson = new JSONObject();
             chapterJson.put("chapterName", chapterNameList.get(i));
@@ -138,7 +142,7 @@ public class BiQuGeServiceImpl implements BiQuGeService {
             chapterArray.add(chapterJson);
         }
 
-        JSONArray jsonArray = new JSONArray();
+        JSONObject data = new JSONObject();
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("name", title);
         jsonObject.put("author", author);
@@ -147,9 +151,11 @@ public class BiQuGeServiceImpl implements BiQuGeService {
         jsonObject.put("latestUpdateChapter", latestUpdateChapter);
         jsonObject.put("introduction", introduction);
         jsonObject.put("chapter", chapterArray);
-        jsonArray.add(jsonObject);
+        jsonObject.put("cover", cover);
+        data.put("title", jsonObject);
+        data.put("body", chapterArray);
 
-        return jsonArray;
+        return data;
     }
 
     @Override
@@ -170,27 +176,24 @@ public class BiQuGeServiceImpl implements BiQuGeService {
     }
 
     @Override
-    public JSONArray biQuSortAnalysis(String url) throws IOException {
+    public List<JSONObject> biQuSortAnalysis(String url) throws IOException {
         Response response = httpService.httpGet(url, null);
         assert response.body() != null;
         Document document = Jsoup.parse(response.body().string());
         List<String> bookName = document.select("div.item div.image img").eachAttr("alt");
-        List<String> bookAuthor = document.select("div.item dl dt span").eachText();
-        List<String> bookIntroduce = document.select("div.item dl dd").eachText();
-        List<String> bookCover = document.select("div.item div.image img").eachAttr("src").stream().map(e -> withUrl + e).collect(Collectors.toList());
         List<String> bookLink = document.select("div.item div.image a").eachAttr("href").stream().map(e -> withUrl + e).collect(Collectors.toList());
 
-        JSONArray jsonArray = new JSONArray();
+        bookName.addAll(document.select("span.s2 a").eachText());
+        bookLink.addAll(document.select("span.s2 a").eachAttr("href").stream().map(e -> withUrl + e).collect(Collectors.toList()));
+
+        List<JSONObject> list = new ArrayList<>();
         for (int i = 0; i < bookName.size(); i++) {
             JSONObject jsonObject = new JSONObject();
             jsonObject.put("bookName", bookName.get(i));
-            jsonObject.put("bookCover", bookCover.get(i));
-            jsonObject.put("bookAuthor", bookAuthor.get(i));
-            jsonObject.put("bookIntroduce", bookIntroduce.get(i));
             jsonObject.put("bookLink", bookLink.get(i));
-            jsonArray.add(jsonObject);
+            list.add(jsonObject);
         }
-        return jsonArray;
+        return list;
     }
 
 }

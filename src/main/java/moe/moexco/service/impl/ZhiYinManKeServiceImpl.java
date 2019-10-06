@@ -87,7 +87,7 @@ public class ZhiYinManKeServiceImpl implements ZhiYinManKeService {
         Document document = Jsoup.parse(response.body().string());
         String totalPage = document.selectFirst("span.totalPage").text();
 
-        String imgPath = "";
+        StringBuilder imgPath = new StringBuilder();
 
         String data = document.selectFirst("div.comiclist script").toString();
         Matcher matcherAddr =  Pattern.compile("chapter_addr:\"(.*?)\"").matcher(data);
@@ -97,7 +97,7 @@ public class ZhiYinManKeServiceImpl implements ZhiYinManKeService {
             String id = matcherId.group().replace("chapter_id:", "").replace(",", "");
             for (int i = 0; i < a.length(); i++) {
                 String b =  fromCharCode(new String(a.substring(i, i+1).getBytes("unicode"),"unicode").hashCode()- Integer.parseInt(id)%10);
-                imgPath+=b;
+                imgPath.append(b);
             }
         }else {
             return null;
@@ -108,16 +108,6 @@ public class ZhiYinManKeServiceImpl implements ZhiYinManKeService {
             list.add("https://mhpic.zymkcdn.com/comic/" + imgPath + String.valueOf(i) + ".jpg-zymk.high.webp");
         }
         return list;
-    }
-
-    @Override
-    public List<JSONObject> comicSearch(String value, List<JSONObject> data) throws IOException {
-
-        if (null == data || data.size() == 0) {
-            data = getAllComic();
-        }
-
-        return data.stream().filter(e -> Pattern.matches(".*?" + value + ".*?", e.getString("comicName"))).collect(Collectors.toList());
     }
 
     private String fromCharCode(int... codePoints) {

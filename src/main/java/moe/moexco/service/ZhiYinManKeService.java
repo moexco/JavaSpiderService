@@ -14,6 +14,7 @@ public interface ZhiYinManKeService {
 
     /**
      * 获取知音漫客全部漫画，返回封面、名字、链接
+     *
      * @return
      * @throws IOException
      */
@@ -22,27 +23,20 @@ public interface ZhiYinManKeService {
 
     /**
      * 获取漫画的全部章节，返回漫画介绍，章节，链接
+     *
      * @param url
      * @return
      * @throws IOException
      */
-    JSONObject getAllChapters(String url) throws  IOException;
+    JSONObject getAllChapters(String url) throws IOException;
 
     /**
      * 获取漫画的全部页， 返回链接list
+     *
      * @param url
      * @return
      * @throws IOException
      */
     List<String> getChapterImages(String url) throws IOException;
-
-    /**
-     * 模糊搜索漫画，data可以为null，未做排序处理
-     * @param value
-     * @param data
-     * @return
-     * @throws IOException
-     */
-    List<JSONObject> comicSearch(String value, List<JSONObject> data) throws IOException;
 
 }
