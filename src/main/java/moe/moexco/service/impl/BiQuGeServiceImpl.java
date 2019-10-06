@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 public class BiQuGeServiceImpl implements BiQuGeService {
 
     private OkHttpService httpService = new HttpService();
+    private String withUrl = "https://www.xbiquge6.com";
 
     @Override
     public JSONObject biQuGeIndex() throws IOException {
@@ -127,7 +128,7 @@ public class BiQuGeServiceImpl implements BiQuGeService {
         String introduction = document.selectFirst("div#intro").text();
 
         List<String> chapterNameList = document.select("div#list dd").eachText();
-        List<String> linkList = document.select("div#list dd a").eachAttr("href").stream().map(e -> url + e.replace("/", "")).collect(Collectors.toList());
+        List<String> linkList = document.select("div#list dd a").eachAttr("href").stream().map(e -> withUrl + e).collect(Collectors.toList());
 
         JSONArray chapterArray = new JSONArray();
         for (int i = 0; i < chapterNameList.size(); i++) {
@@ -153,7 +154,6 @@ public class BiQuGeServiceImpl implements BiQuGeService {
 
     @Override
     public JSONObject biQuChapter(String url) throws IOException {
-        httpService = new HttpService();
         Response response = httpService.httpGet(url, null);
         assert response.body() != null;
         Document document = Jsoup.parse(response.body().string());
@@ -171,8 +171,6 @@ public class BiQuGeServiceImpl implements BiQuGeService {
 
     @Override
     public JSONArray biQuSortAnalysis(String url) throws IOException {
-        String withUrl = "https://www.xbiquge6.com";
-        httpService = new HttpService();
         Response response = httpService.httpGet(url, null);
         assert response.body() != null;
         Document document = Jsoup.parse(response.body().string());
