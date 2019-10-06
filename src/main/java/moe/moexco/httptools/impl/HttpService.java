@@ -21,10 +21,14 @@ public class HttpService implements OkHttpService {
         return Headers.of(header);
     }
 
+    private Headers headers;
+
     @Override
-    public Response httpGet(String url, Headers headers) throws IOException {
-        if (null == headers) {
+    public Response httpGet(String url, Map<String, String> headerMap) throws IOException {
+        if (null == headerMap) {
             headers = defaultHeaders();
+        }else {
+            headers = Headers.of(headerMap);
         }
         OkHttpClient httpClient = new OkHttpClient();
         Request request = new Request.Builder()
@@ -35,9 +39,11 @@ public class HttpService implements OkHttpService {
     }
 
     @Override
-    public Response httpPost(String url, Headers headers, FormBody body) throws IOException {
-        if (null == headers) {
+    public Response httpPost(String url, Map<String, String> headerMap, FormBody body) throws IOException {
+        if (null == headerMap) {
             headers = defaultHeaders();
+        }else {
+            headers = Headers.of(headerMap);
         }
         OkHttpClient httpClient = new OkHttpClient();
         Request request = new Request.Builder()
